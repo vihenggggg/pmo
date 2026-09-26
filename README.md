@@ -3,7 +3,7 @@
 A web app that replaces the Excel sales-order tracker. It supports Normal and Project SOs, pasting rows straight from Excel, and importing a whole `.xlsx`, `.xls` or `.csv` file. A live dashboard shows totals, status breakdown, collection progress and flagged issues.
 
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS (`src/`)
-- **API:** Cloudflare Pages Functions (`functions/api/`)
+- **API:** Pages-Functions-style handlers in `functions/api/`, compiled into a Cloudflare Worker (served alongside the SPA as Workers static assets)
 - **Database:** Neon Postgres via `@neondatabase/serverless` over HTTP (`db/schema.sql`)
 - **Shared code:** field definitions, date/number parsing and validation used by both the frontend and the API (`shared/schema.ts`)
 
@@ -46,25 +46,27 @@ All routes are under `/api` and use JSON. Every route except login, logout and s
 
 `remaining_balance` is computed as `contract_value - invoiced_amt` and is not stored.
 
-## Deploy (GitHub + Cloudflare Pages + Neon)
+## Deploy (GitHub + Cloudflare Workers + Neon)
 
-1. **Neon:** create a project at [neon.tech](https://neon.tech) and copy the **pooled** connection string. Run `db/schema.sql` in the Neon SQL editor. It is safe to re-run.
-2. **GitHub:** push this repo.
-3. **Cloudflare Pages:** go to Workers & Pages → Create → Pages → Connect to Git and select the repo.
-   - Framework preset: *None* (or Vite)
+The app deploys as a single Cloudflare Worker named `pmo` (see `wrangler.jsonc`). `npm run build` builds the SPA into `dist/` and compiles `functions/` into `dist/_worker.js/`. Cloudflare then serves `dist/` as static assets and runs the Worker for `/api/*`.
+
+1. **Neon:** in the Neon project `viheng-so-tracker`, `db/schema.sql` has already been applied. Get the **pooled** connection string from Connect, with Connection pooling turned on.
+2. **Cloudflare:** Workers & Pages → the `pmo` Worker → Settings → Build (it's connected to `vihenggggg/pmo`):
    - Build command: `npm run build`
-   - Build output directory: `dist`
-4. **Environment variables:** under Settings → Variables and Secrets, set both of these for Production and Preview:
+   - Deploy command: `npx wrangler deploy`
+3. **Secrets:** `pmo` → Settings → Variables and Secrets. Add both of these as type **Secret**:
    - `DATABASE_URL`: the Neon pooled connection string
    - `APP_PASSPHRASE`: your login passphrase
-5. After that, every push to `main` deploys automatically. The `functions/` directory becomes the API, and only `/api/*` requests run through it.
+4. Every push to the connected branch then builds and deploys. `keep_vars` in `wrangler.jsonc` stops deploys from wiping variables you set in the dashboard.
+
+To deploy from your own machine instead, run `npx wrangler login`, then `npm run deploy`.
 
 ## Local development
 
 ```bash
 npm install
 cp .dev.vars.example .dev.vars          # fill in DATABASE_URL (a Neon branch works well) and APP_PASSPHRASE
-npm run build && npm run dev:functions  # API (and built SPA) on http://localhost:8788
+npm run build && npm run dev:functions  # Worker (API + built SPA) on http://localhost:8788
 npm run dev                             # in another terminal: Vite on http://localhost:5173, proxying /api → :8788
 ```
 
