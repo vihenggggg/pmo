@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #2a78d6;
+  --color-accent-soft: #dbe8f8;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-900 antialiased; }
+.tabular { font-variant-numeric: tabular-nums; }

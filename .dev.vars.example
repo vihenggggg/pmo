@@ -1,0 +1,2 @@
+DATABASE_URL=postgresql://user:password@ep-xxxx-pooler.region.aws.neon.tech/neondb?sslmode=require
+APP_PASSPHRASE=change-me

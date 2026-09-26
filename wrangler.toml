@@ -1,0 +1,6 @@
+# Used by `wrangler pages dev` locally. Production settings live in the
+# Cloudflare Pages dashboard (build command `npm run build`, output `dist`).
+name = "viheng-so-tracker"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
